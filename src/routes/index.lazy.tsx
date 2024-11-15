@@ -1,6 +1,6 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
 import html2canvas from 'html2canvas'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import ToolBox from '@/components/ToolBox'
 
 export const Route = createLazyFileRoute('/')({
@@ -30,7 +30,7 @@ function Index() {
     setBgDataUrl(bgDataUrl)
   }
 
-  function setCanvasBg(bgDataUrl: string) {
+  function setCanvasBg() {
     const ctx = canvasRef.current?.getContext('2d')
     if (!ctx) {
       return
@@ -79,6 +79,8 @@ function Index() {
   }
 
   function mouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
+    resetCanvas()
+    resetPoint()
     setIsShowToolBox(false)
     setIsDrawing(true)
     setStartPoint({ x: e.clientX, y: e.clientY })
@@ -91,11 +93,11 @@ function Index() {
     const bottom = Math.max(endPoint?.y || 0, startPoint?.y || 0)
     const right = Math.max(endPoint?.x || 0, startPoint?.x || 0)
 
-    setToolBoxPosition({ x: right - 80, y: bottom + 20 })
-    setIsShowToolBox(true)
-
-    setStartPoint(null)
-    setEndPoint(null)
+    setToolBoxPosition({ x: right - 110, y: bottom + 20 })
+    if (startPoint && endPoint && Math.abs(startPoint.x - endPoint.x) > 10 && Math.abs(startPoint.y - endPoint.y) > 10
+    ) {
+      setIsShowToolBox(true)
+    }
   }
 
   function mouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -107,9 +109,7 @@ function Index() {
   }
 
   function draw() {
-    clearCanvas()
-    setCanvasBg(bgDataUrl)
-    setCanvasMask()
+    resetCanvas()
 
     if (!canvasRef.current || !startPoint || !endPoint) {
       return
@@ -124,11 +124,53 @@ function Index() {
     setIsCapturing(true)
   }
 
-  useEffect(() => {
-    if (isDrawing && startPoint && endPoint) {
-      drawRect(startPoint, endPoint)
+  function resetPoint() {
+    setStartPoint(null)
+    setEndPoint(null)
+  }
+
+  function resetCanvas() {
+    clearCanvas()
+    setCanvasBg()
+    setCanvasMask()
+  }
+
+  function handleCancel() {
+    resetCanvas()
+    resetPoint()
+    setIsShowToolBox(false)
+    setIsCapturing(false)
+  }
+
+  function handleSave() {
+    // TODO: 保存截图
+    // 获取截取的指定区域
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')!
+    if (!startPoint || !endPoint) {
+      return
     }
-  }, [isDrawing, startPoint, endPoint])
+    canvas.width = Math.abs(startPoint.x - endPoint.x)
+    canvas.height = Math.abs(startPoint.y - endPoint.y)
+    ctx.drawImage(
+      canvasRef.current!,
+      Math.min(startPoint.x, endPoint.x),
+      Math.min(startPoint.y, endPoint.y),
+      Math.abs(startPoint.x - endPoint.x),
+      Math.abs(startPoint.y - endPoint.y),
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
+    const dataUrl = canvas.toDataURL('image/png')
+
+    const a = document.createElement('a')
+    a.href = dataUrl || ''
+    a.download = 'screenshot.png'
+    a.click()
+    a.remove()
+  }
 
   return (
     <div className="p-2">
@@ -152,6 +194,8 @@ function Index() {
       {isShowToolBox && toolBoxPosition && (
         <ToolBox
           position={toolBoxPosition}
+          onCancel={handleCancel}
+          onSave={handleSave}
         />
       )}
     </div>
