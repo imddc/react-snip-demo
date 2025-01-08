@@ -8,3 +8,9 @@ html,
 body {
   @apply size-full;
 }
+
+@layer base {
+  img {
+    @apply inline-block;
+  }
+}

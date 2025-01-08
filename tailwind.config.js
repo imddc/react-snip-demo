@@ -1,11 +1,15 @@
-const { addDynamicIconSelectors } = require('@iconify/tailwind')
+import { addDynamicIconSelectors } from '@iconify/tailwind'
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  corePlugins: {
+    preflight: true,
+    container: true,
+  },
   darkMode: 'selector',
   content: [
     './index.html',
-    './src/**/*.{vue,js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {},

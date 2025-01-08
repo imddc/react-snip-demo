@@ -25,7 +25,9 @@ function Index() {
     if (!root) {
       return ''
     }
-    const canvas = await html2canvas(root)
+    const canvas = await html2canvas(root, {
+      useCORS: true,
+    })
     setBgCanvas(canvas)
   }
 
